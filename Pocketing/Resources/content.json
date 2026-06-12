@@ -1,0 +1,330 @@
+[
+  {
+    "id": "A1B2C3D4-E5F6-7890-ABCD-EF1234567801",
+    "course": "Concurrency",
+    "topic": "Deadlock Conditions",
+    "primer": "A deadlock occurs when four Coffman conditions hold simultaneously: mutual exclusion, hold and wait, no preemption, and circular wait.",
+    "challengeType": "binaryChoice",
+    "challengeData": {
+      "scenario": "A system uses a resource-ordering protocol where every thread must acquire locks in increasing order of resource ID. Which Coffman condition does this strategy eliminate?",
+      "options": ["Circular wait", "Mutual exclusion"],
+      "correctIndex": 0,
+      "feedback": "Resource ordering prevents circular wait by ensuring the lock acquisition graph is always a DAG — no cycle can form if every thread requests resources in strictly increasing order."
+    }
+  },
+  {
+    "id": "A1B2C3D4-E5F6-7890-ABCD-EF1234567802",
+    "course": "Concurrency",
+    "topic": "Memory Ordering",
+    "primer": "Modern CPUs reorder memory operations for performance. Memory barriers (fences) enforce ordering constraints between loads and stores.",
+    "challengeType": "binaryChoice",
+    "challengeData": {
+      "scenario": "Thread A writes x = 1 then sets a flag = true. Thread B spins until flag == true then reads x. Without memory barriers, can Thread B observe x == 0?",
+      "options": ["Yes — store reordering can make x visible after flag", "No — flag depends on x so order is preserved"],
+      "correctIndex": 0,
+      "feedback": "Without a store-release / load-acquire barrier pair, the CPU or compiler may reorder the stores. Thread B can see flag == true while x is still 0 in its cache."
+    }
+  },
+  {
+    "id": "A1B2C3D4-E5F6-7890-ABCD-EF1234567803",
+    "course": "Concurrency",
+    "topic": "Race Condition in Counter",
+    "primer": "A race condition occurs when multiple threads access shared mutable state without synchronization, leading to unpredictable results.",
+    "challengeType": "spotTheBug",
+    "challengeData": {
+      "codeLines": [
+        "var counter = 0",
+        "let queue = DispatchQueue(label: \"q\", attributes: .concurrent)",
+        "for _ in 0..<1000 {",
+        "    queue.async {",
+        "        counter += 1",
+        "    }",
+        "}",
+        "queue.sync(flags: .barrier) {",
+        "    print(counter)",
+        "}"
+      ],
+      "bugLineIndex": 4,
+      "feedback": "The increment `counter += 1` is a read-modify-write that is not atomic. Multiple concurrent threads can read the same value and overwrite each other's increments. Use a serial queue, a barrier write, os_unfair_lock, or an Atomic wrapper."
+    }
+  },
+  {
+    "id": "A1B2C3D4-E5F6-7890-ABCD-EF1234567804",
+    "course": "Concurrency",
+    "topic": "Actor Reentrancy",
+    "primer": "Swift actors serialize access to their mutable state, but each `await` inside an actor is a suspension point where other tasks may interleave.",
+    "challengeType": "spotTheBug",
+    "challengeData": {
+      "codeLines": [
+        "actor BankAccount {",
+        "    var balance: Int = 100",
+        "    func withdraw(_ amount: Int) async -> Bool {",
+        "        guard balance >= amount else { return false }",
+        "        let newBalance = await fetchUpdatedBalance(balance - amount)",
+        "        balance = newBalance",
+        "        return true",
+        "    }",
+        "}"
+      ],
+      "bugLineIndex": 4,
+      "feedback": "The `await` on line 5 is a suspension point. Between the guard check and the assignment, another task can enter the actor, read the same balance, and also pass the guard — leading to a double withdrawal. Capture the new balance synchronously or re-check the guard after the await."
+    }
+  },
+  {
+    "id": "A1B2C3D4-E5F6-7890-ABCD-EF1234567805",
+    "course": "Concurrency",
+    "topic": "Semaphore vs Mutex",
+    "primer": "A mutex provides mutual exclusion for one thread at a time. A counting semaphore generalizes this by allowing up to N concurrent accesses.",
+    "challengeType": "fillBlank",
+    "challengeData": {
+      "snippet": "A counting semaphore initialized to N allows up to ___ threads to enter the critical section concurrently.",
+      "options": ["1", "N", "N - 1"],
+      "correctIndex": 1,
+      "feedback": "A counting semaphore with initial value N permits N concurrent entries. Each `wait()` decrements the count and each `signal()` increments it; threads block when the count reaches zero."
+    }
+  },
+  {
+    "id": "A1B2C3D4-E5F6-7890-ABCD-EF1234567806",
+    "course": "Concurrency",
+    "topic": "Structured Concurrency",
+    "primer": "Swift's structured concurrency uses task groups and async let to create child tasks whose lifetimes are scoped to their parent.",
+    "challengeType": "fillBlank",
+    "challengeData": {
+      "snippet": "In Swift structured concurrency, if a parent task is cancelled, all its ___ tasks are automatically cancelled too.",
+      "options": ["child", "detached", "unstructured"],
+      "correctIndex": 0,
+      "feedback": "Structured concurrency guarantees that child tasks inherit the parent's cancellation. Detached tasks are explicitly unscoped and do NOT inherit cancellation from any parent."
+    }
+  },
+  {
+    "id": "A1B2C3D4-E5F6-7890-ABCD-EF1234567807",
+    "course": "Concurrency",
+    "topic": "Compare-and-Swap",
+    "primer": "Compare-and-swap (CAS) is a hardware atomic primitive used to implement lock-free data structures. It atomically compares a value at a memory location to an expected value, and if they match, swaps in a new value.",
+    "challengeType": "fillBlank",
+    "challengeData": {
+      "snippet": "The ABA problem in lock-free programming occurs when a value changes from A to B and back to A, causing a CAS operation to ___ succeed even though the state was modified.",
+      "options": ["incorrectly", "correctly", "never"],
+      "correctIndex": 0,
+      "feedback": "CAS only compares the current value to the expected value. If the value changed A→B→A, CAS sees A and succeeds, unaware that the value was modified in between. Solutions include tagged pointers or double-width CAS with a version counter."
+    }
+  },
+  {
+    "id": "B2C3D4E5-F6A7-8901-BCDE-F12345678901",
+    "course": "Data Structures",
+    "topic": "Hash Table Collision Resolution",
+    "primer": "Open addressing resolves hash collisions by probing for the next available slot in the array. Linear probing checks slots sequentially, while quadratic probing uses a quadratic function.",
+    "challengeType": "binaryChoice",
+    "challengeData": {
+      "scenario": "A hash table uses linear probing. After many insertions and deletions with tombstone markers, lookup performance has degraded. What is the primary cause?",
+      "options": ["Primary clustering — long runs of occupied/tombstone slots form contiguous chains", "Hash collisions from a weak hash function"],
+      "correctIndex": 0,
+      "feedback": "Linear probing is especially susceptible to primary clustering: contiguous occupied slots form long chains that grow super-linearly. Tombstones worsen this because probes must scan past them. Rehashing periodically or using Robin Hood hashing mitigates this."
+    }
+  },
+  {
+    "id": "B2C3D4E5-F6A7-8901-BCDE-F12345678902",
+    "course": "Data Structures",
+    "topic": "B-Tree Properties",
+    "primer": "A B-tree of order m is a self-balancing search tree where each internal node has at most m children and at least ⌈m/2⌉ children (except the root).",
+    "challengeType": "binaryChoice",
+    "challengeData": {
+      "scenario": "A B-tree of order 5 stores 1,000,000 keys. What is the maximum height of the tree?",
+      "options": ["About 9", "About 20"],
+      "correctIndex": 0,
+      "feedback": "A B-tree of order 5 has at least ⌈5/2⌉ = 3 children per internal node. The minimum keys at depth h is 2·3^(h-1) − 1. Solving 2·3^(h-1) ≤ 1,000,000 gives h ≤ ~13, but in practice with fuller nodes the height stays around 8–9. Far less than 20."
+    }
+  },
+  {
+    "id": "B2C3D4E5-F6A7-8901-BCDE-F12345678903",
+    "course": "Data Structures",
+    "topic": "Binary Heap Bug",
+    "primer": "A min-heap is a complete binary tree where each parent's key is ≤ its children's keys. The standard array representation stores the root at index 0, with children of index i at 2i+1 and 2i+2.",
+    "challengeType": "spotTheBug",
+    "challengeData": {
+      "codeLines": [
+        "func siftDown(_ arr: inout [Int], _ i: Int, _ size: Int) {",
+        "    var smallest = i",
+        "    let left = 2 * i + 1",
+        "    let right = 2 * i + 2",
+        "    if left < size && arr[left] < arr[smallest] { smallest = left }",
+        "    if right < size && arr[right] < arr[smallest] { smallest = right }",
+        "    if smallest != i {",
+        "        arr.swapAt(i, smallest)",
+        "    }",
+        "}"
+      ],
+      "bugLineIndex": 8,
+      "feedback": "After swapping, siftDown must recursively call itself on the `smallest` index to continue pushing the element down the heap. Without the recursive call `siftDown(&arr, smallest, size)`, a large element may stop before reaching its correct position, violating the heap property."
+    }
+  },
+  {
+    "id": "B2C3D4E5-F6A7-8901-BCDE-F12345678904",
+    "course": "Data Structures",
+    "topic": "Trie Deletion",
+    "primer": "A trie (prefix tree) stores strings character-by-character along edges. Deletion must remove a word's end-of-word marker and prune any nodes that are no longer part of another word.",
+    "challengeType": "spotTheBug",
+    "challengeData": {
+      "codeLines": [
+        "func delete(_ node: TrieNode, _ word: String, _ depth: Int) -> Bool {",
+        "    guard depth < word.count else {",
+        "        node.isEndOfWord = false",
+        "        return node.children.isEmpty",
+        "    }",
+        "    let ch = word[word.index(word.startIndex, offsetBy: depth)]",
+        "    guard let child = node.children[ch] else { return false }",
+        "    let shouldDelete = delete(child, word, depth + 1)",
+        "    if shouldDelete {",
+        "        node.children[ch] = nil",
+        "    }",
+        "    return node.children.isEmpty",
+        "}"
+      ],
+      "bugLineIndex": 11,
+      "feedback": "Line 12 returns `node.children.isEmpty` unconditionally, but it should also check `!node.isEndOfWord`. If the current node marks the end of another word, it must not be deleted even if it has no remaining children. The correct return is `node.children.isEmpty && !node.isEndOfWord`."
+    }
+  },
+  {
+    "id": "B2C3D4E5-F6A7-8901-BCDE-F12345678905",
+    "course": "Data Structures",
+    "topic": "Red-Black Tree Rotations",
+    "primer": "Red-black trees maintain balance through coloring invariants and rotations. After insertion, at most 2 rotations and O(log n) recolorings restore all invariants.",
+    "challengeType": "fillBlank",
+    "challengeData": {
+      "snippet": "In a red-black tree, every path from the root to a ___ must contain the same number of black nodes.",
+      "options": ["leaf (NIL node)", "internal node", "red node"],
+      "correctIndex": 0,
+      "feedback": "The black-height property requires that every path from any node to its descendant NIL (leaf sentinel) nodes has the same number of black nodes. This constraint guarantees that the tree's height is O(log n)."
+    }
+  },
+  {
+    "id": "B2C3D4E5-F6A7-8901-BCDE-F12345678906",
+    "course": "Data Structures",
+    "topic": "Amortized Analysis",
+    "primer": "A dynamic array doubles its capacity when full. While a single resize costs O(n), the amortized cost per insertion is O(1) because resizes become exponentially rarer.",
+    "challengeType": "fillBlank",
+    "challengeData": {
+      "snippet": "Using the banker's method, each insertion into a dynamic array is charged ___ tokens: one for the insertion itself and additional tokens saved for future copying during resizes.",
+      "options": ["2", "3", "n"],
+      "correctIndex": 1,
+      "feedback": "Each insertion is charged 3 tokens: 1 to place the element, and 2 saved. When the array of size n doubles, the n/2 newer elements each contributed 2 saved tokens, providing exactly n tokens to pay for copying all n elements."
+    }
+  },
+  {
+    "id": "B2C3D4E5-F6A7-8901-BCDE-F12345678907",
+    "course": "Data Structures",
+    "topic": "Graph Representations",
+    "primer": "Graphs can be stored as adjacency matrices (O(V²) space) or adjacency lists (O(V+E) space). The choice affects the complexity of common operations.",
+    "challengeType": "fillBlank",
+    "challengeData": {
+      "snippet": "Checking whether an edge exists between two vertices takes O(1) time with an adjacency ___, but O(degree) time with an adjacency list.",
+      "options": ["matrix", "list", "set"],
+      "correctIndex": 0,
+      "feedback": "An adjacency matrix is a 2D array where entry [u][v] directly indicates edge presence, giving O(1) lookup. An adjacency list requires scanning the neighbor list of u, which takes O(degree(u)) in the worst case."
+    }
+  },
+  {
+    "id": "C3D4E5F6-A7B8-9012-CDEF-123456789001",
+    "course": "Operating Systems",
+    "topic": "Page Replacement",
+    "primer": "When physical memory is full and a new page must be loaded, the OS must evict an existing page. LRU (Least Recently Used) evicts the page that hasn't been accessed for the longest time.",
+    "challengeType": "binaryChoice",
+    "challengeData": {
+      "scenario": "A system uses the Clock (second-chance) page replacement algorithm. When the clock hand points to a page with its reference bit set to 1, what happens?",
+      "options": ["The reference bit is cleared to 0 and the hand advances", "The page is immediately evicted"],
+      "correctIndex": 0,
+      "feedback": "The Clock algorithm gives each page a second chance. When the hand encounters a page with reference bit = 1, it clears the bit and moves on. Only pages with reference bit = 0 are evicted. This approximates LRU with O(1) overhead per page fault."
+    }
+  },
+  {
+    "id": "C3D4E5F6-A7B8-9012-CDEF-123456789002",
+    "course": "Operating Systems",
+    "topic": "Process vs Thread",
+    "primer": "A process has its own virtual address space and resources. Threads within a process share the same address space but have their own stack and register state.",
+    "challengeType": "binaryChoice",
+    "challengeData": {
+      "scenario": "Two threads in the same process each declare a local variable `int x = 5;` in their respective functions. Do these variables share the same memory location?",
+      "options": ["No — local variables live on each thread's separate stack", "Yes — threads share all memory in the process"],
+      "correctIndex": 0,
+      "feedback": "While threads share heap, global/static data, and code segments, each thread has its own stack. Local variables are stack-allocated, so each thread's `x` is at a different memory address."
+    }
+  },
+  {
+    "id": "C3D4E5F6-A7B8-9012-CDEF-123456789003",
+    "course": "Operating Systems",
+    "topic": "Fork Bomb",
+    "primer": "The `fork()` system call creates a new child process that is a copy of the parent. The return value differs: 0 in the child, the child's PID in the parent.",
+    "challengeType": "spotTheBug",
+    "challengeData": {
+      "codeLines": [
+        "int main() {",
+        "    fork();",
+        "    fork();",
+        "    printf(\"hello\\n\");",
+        "    return 0;",
+        "}"
+      ],
+      "bugLineIndex": 2,
+      "feedback": "The second `fork()` is called by both the original parent and the child from the first fork, creating 4 processes total (not 2). Without checking fork's return value, the process tree grows exponentially. Each additional unconditional fork doubles the process count."
+    }
+  },
+  {
+    "id": "C3D4E5F6-A7B8-9012-CDEF-123456789004",
+    "course": "Operating Systems",
+    "topic": "Interrupt Handler Bug",
+    "primer": "When a hardware interrupt fires, the CPU saves state and jumps to the interrupt handler. Handlers must be fast and should not perform blocking operations.",
+    "challengeType": "spotTheBug",
+    "challengeData": {
+      "codeLines": [
+        "void disk_interrupt_handler() {",
+        "    Buffer *buf = get_completed_buffer();",
+        "    mutex_lock(&buf->lock);",
+        "    buf->status = COMPLETE;",
+        "    wakeup(buf->waiting_process);",
+        "    mutex_unlock(&buf->lock);",
+        "}"
+      ],
+      "bugLineIndex": 2,
+      "feedback": "Calling `mutex_lock` inside an interrupt handler can cause a deadlock: if the interrupted thread already holds `buf->lock`, the handler will spin or block forever. Interrupt handlers should use spin locks with interrupts disabled, or defer work to a bottom-half/tasklet that runs in process context."
+    }
+  },
+  {
+    "id": "C3D4E5F6-A7B8-9012-CDEF-123456789005",
+    "course": "Operating Systems",
+    "topic": "Virtual Memory",
+    "primer": "Virtual memory provides each process the illusion of a large, contiguous address space. The MMU translates virtual addresses to physical addresses using page tables.",
+    "challengeType": "fillBlank",
+    "challengeData": {
+      "snippet": "A TLB (Translation Lookaside Buffer) is a ___ that caches recent virtual-to-physical page translations to avoid costly page table walks.",
+      "options": ["hardware cache", "software hash table", "disk buffer"],
+      "correctIndex": 0,
+      "feedback": "The TLB is a small, fast, fully-associative hardware cache in the MMU. On a TLB hit, the physical frame number is returned in a single cycle, bypassing the multi-level page table walk that can require several memory accesses."
+    }
+  },
+  {
+    "id": "C3D4E5F6-A7B8-9012-CDEF-123456789006",
+    "course": "Operating Systems",
+    "topic": "Scheduling Algorithms",
+    "primer": "CPU scheduling determines which ready process runs next. Common algorithms include FCFS, SJF, Round Robin, and Multi-Level Feedback Queue (MLFQ).",
+    "challengeType": "fillBlank",
+    "challengeData": {
+      "snippet": "In Round Robin scheduling, each process runs for at most one ___ before being preempted and moved to the back of the ready queue.",
+      "options": ["time quantum", "CPU burst", "context switch"],
+      "correctIndex": 0,
+      "feedback": "Round Robin assigns each process a fixed time quantum (or time slice). When the quantum expires, the running process is preempted, its state is saved, and the next process in the queue is dispatched. Smaller quanta improve responsiveness but increase context-switch overhead."
+    }
+  },
+  {
+    "id": "C3D4E5F6-A7B8-9012-CDEF-123456789007",
+    "course": "Operating Systems",
+    "topic": "File Systems",
+    "primer": "File systems manage how data is stored and retrieved on disk. Journaling file systems (ext4, NTFS) write metadata changes to a log before applying them, ensuring crash consistency.",
+    "challengeType": "fillBlank",
+    "challengeData": {
+      "snippet": "An ___ in a Unix file system stores a file's metadata (size, permissions, block pointers) but does NOT store the file's name.",
+      "options": ["inode", "superblock", "directory entry"],
+      "correctIndex": 0,
+      "feedback": "The inode contains all file metadata and pointers to data blocks. The filename is stored in the parent directory's data blocks as a (name → inode number) mapping. This separation allows hard links — multiple names pointing to the same inode."
+    }
+  }
+]
